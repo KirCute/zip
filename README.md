@@ -1,92 +1,19 @@
-This fork add support for Standard Zip Encryption.
+This fork add support for extracting multipart zips like `.z01`, `.z02`, ..., `.zip`.
 
-The work is based on https://github.com/alexmullins/zip
+The work is based on <https://github.com/alexmullins/zip>
 
-Available encryption:
+The work related to Standard Zip Encryption is based on <https://github.com/yeka/zip>
 
-```
-zip.StandardEncryption
-zip.AES128Encryption
-zip.AES192Encryption
-zip.AES256Encryption
-```
+## Usage
 
-## Warning
+- Call `OpenReader` and pass the filename of the volume with the `.zip` suffix to open the entire multipart archive. (Totally same to `alexmullins/zip`)
 
-Zip Standard Encryption isn't actually secure.
-Unless you have to work with it, please use AES encryption instead.
+- Call `NewMultipartReader` and provide each volume as a `SizeReaderAt`. The volume with the `.zip` suffix must be the last one in the sequence.
 
-## Example Encrypt Zip
-
-```
-package main
-
-import (
-	"bytes"
-	"io"
-	"log"
-	"os"
-
-	"github.com/yeka/zip"
-)
-
-func main() {
-	contents := []byte("Hello World")
-	fzip, err := os.Create(`./test.zip`)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	zipw := zip.NewWriter(fzip)
-	defer zipw.Close()
-	w, err := zipw.Encrypt(`test.txt`, `golang`, zip.AES256Encryption)
-	if err != nil {
-		log.Fatal(err)
-	}
-	_, err = io.Copy(w, bytes.NewReader(contents))
-	if err != nil {
-		log.Fatal(err)
-	}
-	zipw.Flush()
-}
-```
-
-## Example Decrypt Zip
-
-```
-package main
-
-import (
-	"fmt"
-	"io/ioutil"
-	"log"
-
-	"github.com/yeka/zip"
-)
-
-func main() {
-	r, err := zip.OpenReader("encrypted.zip")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer r.Close()
-
-	for _, f := range r.File {
-		if f.IsEncrypted() {
-			f.SetPassword("12345")
-		}
-
-		r, err := f.Open()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		buf, err := ioutil.ReadAll(r)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer r.Close()
-
-		fmt.Printf("Size of %v: %v byte(s)\n", f.Name, len(buf))
-	}
-}
-```
+- Defination of `SizeReaderAt`:
+  ```go
+  type SizeReaderAt interface {
+      Size() int64
+      io.ReaderAt
+  }
+  ```
