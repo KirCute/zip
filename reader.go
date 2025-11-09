@@ -122,7 +122,7 @@ func (z *Reader) init(r []SizeReaderAt) error {
 	if err != nil {
 		return err
 	}
-	if int(end.diskNbr) != len(r) {
+	if int(end.diskNbr) != len(r)-1 {
 		return ErrPartCountMismatch
 	}
 	if end.directoryRecords > uint64(lastPart.Size())/fileHeaderLen {
