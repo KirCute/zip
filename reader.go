@@ -17,9 +17,10 @@ import (
 )
 
 var (
-	ErrFormat    = errors.New("zip: not a valid zip file")
-	ErrAlgorithm = errors.New("zip: unsupported compression algorithm")
-	ErrChecksum  = errors.New("zip: checksum error")
+	ErrFormat            = errors.New("zip: not a valid zip file")
+	ErrAlgorithm         = errors.New("zip: unsupported compression algorithm")
+	ErrChecksum          = errors.New("zip: checksum error")
+	ErrPartCountMismatch = errors.New("zip: part count mismatch")
 )
 
 type SizeReaderAt interface {
@@ -120,6 +121,9 @@ func (z *Reader) init(r []SizeReaderAt) error {
 	end, err := readDirectoryEnd(lastPart, lastPartSize)
 	if err != nil {
 		return err
+	}
+	if int(end.diskNbr) != len(r)-1 {
+		return ErrPartCountMismatch
 	}
 	if end.directoryRecords > uint64(lastPart.Size())/fileHeaderLen {
 		return fmt.Errorf("archive/zip: TOC declares impossible %d files in %d byte zip", end.directoryRecords, lastPartSize)
